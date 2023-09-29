@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { copy, linkIcon, loader, tick } from "../assets";
+import React, { useState, useEffect } from "react";
 
+import { copy, linkIcon, loader, tick } from "../assets";
 import { useLazyGetSummaryQuery } from "../services/article";
 
 const Demo = () => {
@@ -15,7 +15,7 @@ const Demo = () => {
   // RTK lazy query
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
 
-  //   // Load data from localStorage on mount
+  // Load data from localStorage on mount
   useEffect(() => {
     const articlesFromLocalStorage = JSON.parse(
       localStorage.getItem("articles")
@@ -26,19 +26,21 @@ const Demo = () => {
     }
   }, []);
 
-  const handleSumbit = async (e) => {
+  const handleSubmit = async (e) => {
     // prevent from reload
     e.preventDefault();
+    const existingArticle = allArticles.find(
+      (item) => item.url === article.url
+    );
 
+    if (existingArticle) return setArticle(existingArticle);
     // now in console ->summary fetch now you have to save it on local storage than display it
-
     const { data } = await getSummary({ articleUrl: article.url });
-
     if (data?.summary) {
       const newArticle = { ...article, summary: data.summary };
-      // to push all article
       const updatedAllArticles = [newArticle, ...allArticles];
 
+      // update state and local storage
       setArticle(newArticle);
       setAllArticles(updatedAllArticles);
       localStorage.setItem("articles", JSON.stringify(updatedAllArticles));
@@ -52,17 +54,23 @@ const Demo = () => {
     setTimeout(() => setCopied(false), 3000);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.keyCode === 13) {
+      handleSubmit(e);
+    }
+  };
+
   return (
     <section className="mt-16 w-full max-w-xl">
-      {/* Search  */}
+      {/* Search */}
       <div className="flex flex-col w-full gap-2">
         <form
-          className="relative flex justify-center items-center "
-          onSubmit={handleSumbit}
+          className="relative flex justify-center items-center"
+          onSubmit={handleSubmit}
         >
           <img
             src={linkIcon}
-            alt="linkIcon"
+            alt="link-icon"
             className="absolute left-0 my-2 ml-3 w-5"
           />
 
@@ -71,6 +79,7 @@ const Demo = () => {
             placeholder="Paste the article link"
             value={article.url}
             onChange={(e) => setArticle({ ...article, url: e.target.value })}
+            onKeyDown={handleKeyDown}
             required
             className="url_input peer" // When you need to style an element based on the state of a sibling element, mark the sibling with the peer class, and use peer-* modifiers to style the target element
           />
@@ -81,16 +90,15 @@ const Demo = () => {
             <p>↵</p>
           </button>
         </form>
-        {/* Browse URL History  */}
+
+        {/* Browse History */}
         <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-          {/* loop through all article  */}
-          {allArticles.map((item, index) => (
+          {allArticles.reverse().map((item, index) => (
             <div
               key={`link-${index}`}
               onClick={() => setArticle(item)}
               className="link_card"
             >
-              {/* populate the item  */}
               <div className="copy_btn" onClick={() => handleCopy(item.url)}>
                 <img
                   src={copied === item.url ? tick : copy}
@@ -105,12 +113,12 @@ const Demo = () => {
           ))}
         </div>
       </div>
-      {/* Display Result  */}
+
+      {/* Display Result */}
       <div className="my-10 max-w-full flex justify-center items-center">
         {isFetching ? (
           <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
-        ) : // if not fetching
-        error ? (
+        ) : error ? (
           <p className="font-inter font-bold text-black text-center">
             Well, that wasn't supposed to happen...
             <br />
@@ -119,7 +127,6 @@ const Demo = () => {
             </span>
           </p>
         ) : (
-          // if we not fetching and than no error than show
           article.summary && (
             <div className="flex flex-col gap-3">
               <h2 className="font-satoshi font-bold text-gray-600 text-xl">
