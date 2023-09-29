@@ -10,6 +10,7 @@ const Demo = () => {
   });
   // to list all article that you have been searched
   const [allArticles, setAllArticles] = useState([]);
+  const [copied, setCopied] = useState("");
 
   // RTK lazy query
   const [getSummary, { error, isFetching }] = useLazyGetSummaryQuery();
@@ -41,8 +42,14 @@ const Demo = () => {
       setArticle(newArticle);
       setAllArticles(updatedAllArticles);
       localStorage.setItem("articles", JSON.stringify(updatedAllArticles));
-      console.log(newArticle);
     }
+  };
+
+  // copy the url and toggle the icon for user feedback
+  const handleCopy = (copyUrl) => {
+    setCopied(copyUrl);
+    navigator.clipboard.writeText(copyUrl);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (
@@ -84,10 +91,10 @@ const Demo = () => {
               className="link_card"
             >
               {/* populate the item  */}
-              <div className="copy_btn">
+              <div className="copy_btn" onClick={() => handleCopy(item.url)}>
                 <img
-                  src={copy}
-                  alt="copy_icon"
+                  src={copied === item.url ? tick : copy}
+                  alt={copied === item.url ? "tick_icon" : "copy_icon"}
                   className="w-[40%] h-[40%] object-contain"
                 />
               </div>
